@@ -6,129 +6,124 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f7f7f7;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-    .timer-container {
-      background: white;
       padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-      text-align: center;
-      width: 300px;
+      background-color: #f9f9f9;
+      color: #333;
     }
+
+    .timer-container {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
     .time-display {
-      font-size: 48px;
-      margin-bottom: 20px;
+      font-size: 40px;
+      font-weight: bold;
+      min-width: 100px;
     }
+
+    .inputs {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
     select {
       font-size: 16px;
-      margin: 0 5px;
+      padding: 5px 10px;
     }
+
     button {
-      margin: 10px 5px;
-      padding: 10px 20px;
+      padding: 8px 14px;
       font-size: 16px;
-      cursor: pointer;
-      border: none;
-      border-radius: 6px;
-      background-color: #8A6E78;
+      background-color: #A17E89;
       color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
     }
+
     button:hover {
-      background-color: #7a5e68;
+      background-color: #8a6773;
     }
   </style>
 </head>
 <body>
 
-  <div class="timer-container">
-    <div class="time-display" id="time">00:30</div>
+  <h2>Custom Timer ⏱</h2>
 
-    <div>
-      <label>Minutes:
-        <select id="minutes">
-          ${[...Array(13)].map((_, i) => `<option value="${i*5}">${i*5}</option>`).join('')}
-        </select>
-      </label>
-      <label>Seconds:
-        <select id="seconds">
-          ${[...Array(13)].map((_, i) => `<option value="${i*5}">${i*5}</option>`).join('')}
-        </select>
-      </label>
+  <div class="timer-container">
+    <div class="time-display" id="timer">00:30</div>
+
+    <div class="inputs">
+      <label for="minutes">Min:</label>
+      <select id="minutes">
+        <!-- Opzioni da 0 a 60 -->
+        ${[...Array(13)].map((_, i) => `<option value="${i * 5}">${i * 5}</option>`).join('')}
+      </select>
+
+      <label for="seconds">Sec:</label>
+      <select id="seconds">
+        <!-- Opzioni da 0 a 55 -->
+        ${[...Array(13)].map((_, i) => `<option value="${i * 5}">${i * 5}</option>`).join('')}
+      </select>
     </div>
 
     <button id="start">Play</button>
-    <button id="pause">Pause</button>
+    <button id="stop">Stop</button>
   </div>
 
-  <audio id="ding">
-    <source src="https://www.soundjay.com/button/beep-07.wav" type="audio/wav">
-  </audio>
+  <audio id="ding" src="https://www.soundjay.com/buttons/sounds/button-3.mp3" preload="auto"></audio>
 
   <script>
-    let timer;
+    const timerDisplay = document.getElementById("timer");
+    const minutesInput = document.getElementById("minutes");
+    const secondsInput = document.getElementById("seconds");
+    const startBtn = document.getElementById("start");
+    const stopBtn = document.getElementById("stop");
+    const ding = document.getElementById("ding");
+
+    let interval;
     let totalSeconds = 30;
-    let isRunning = false;
 
-    const timeDisplay = document.getElementById('time');
-    const minutesSelect = document.getElementById('minutes');
-    const secondsSelect = document.getElementById('seconds');
-    const ding = document.getElementById('ding');
-
-    // Set initial selection
-    minutesSelect.value = "0";
-    secondsSelect.value = "30";
-
-    function updateDisplay() {
-      let mins = Math.floor(totalSeconds / 60);
-      let secs = totalSeconds % 60;
-      timeDisplay.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    function updateDisplay(seconds) {
+      const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+      const secs = (seconds % 60).toString().padStart(2, '0');
+      timerDisplay.textContent = `${mins}:${secs}`;
     }
 
     function startTimer() {
-      if (isRunning) return;
-      isRunning = true;
-      timer = setInterval(() => {
+      clearInterval(interval);
+      const minutes = parseInt(minutesInput.value);
+      const seconds = parseInt(secondsInput.value);
+      totalSeconds = minutes * 60 + seconds;
+      if (isNaN(totalSeconds) || totalSeconds <= 0) return;
+
+      updateDisplay(totalSeconds);
+
+      interval = setInterval(() => {
+        totalSeconds--;
+        updateDisplay(totalSeconds);
         if (totalSeconds <= 0) {
-          clearInterval(timer);
+          clearInterval(interval);
           ding.play();
-          isRunning = false;
-        } else {
-          totalSeconds--;
-          updateDisplay();
         }
       }, 1000);
     }
 
-    function pauseTimer() {
-      clearInterval(timer);
-      isRunning = false;
+    function stopTimer() {
+      clearInterval(interval);
     }
 
-    document.getElementById('start').addEventListener('click', () => {
-      totalSeconds = parseInt(minutesSelect.value) * 60 + parseInt(secondsSelect.value);
-      updateDisplay();
-      startTimer();
-    });
+    // Default values
+    minutesInput.value = 0;
+    secondsInput.value = 30;
+    updateDisplay(30);
 
-    document.getElementById('pause').addEventListener('click', pauseTimer);
-
-    // Allow updating display live when selecting time
-    minutesSelect.addEventListener('change', () => {
-      totalSeconds = parseInt(minutesSelect.value) * 60 + parseInt(secondsSelect.value);
-      updateDisplay();
-    });
-
-    secondsSelect.addEventListener('change', () => {
-      totalSeconds = parseInt(minutesSelect.value) * 60 + parseInt(secondsSelect.value);
-      updateDisplay();
-    });
-
-    updateDisplay();
+    startBtn.addEventListener("click", startTimer);
+    stopBtn.addEventListener("click", stopTimer);
   </script>
 </body>
 </html>
